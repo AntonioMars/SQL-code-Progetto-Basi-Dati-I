@@ -1,0 +1,16 @@
+CREATE TABLE t_impiegati (
+codiceImpiegato varchar NOT NULL,
+dataNascita date NOT NULL check
+(DATE_PART(’year’, AGE(current_date, dataNascita)) < 65),
+nome varchar NOT NULL,
+cognome varchar NOT NULL,
+codiceFiscale varchar NOT null check
+(char_length(codiceFiscale) = 16),
+dataAssunzione date NOT NULL check
+(DATE_PART(’year’, AGE(dataAssunzione,
+dataNascita)) > 17) ,
+dirigente bool NOT NULL DEFAULT false,
+ruolo varchar NULL,
+CONSTRAINT t_impiegati_cf_unique UNIQUE (codiceFiscale),
+CONSTRAINT t_impiegato_pk PRIMARY KEY (codiceImpiegato)
+);
