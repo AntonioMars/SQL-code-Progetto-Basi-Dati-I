@@ -1,0 +1,25 @@
+CREATE OR REPLACE FUNCTION checkLaboratorio()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $function$
+begin
+if ( select ruolo from t_impiegati where codiceImpiegato =
+new.codResponsabile) != ’SENIOR’
+THEN raise exception ’Responsabile Scientifico non `e SENIOR’;
+end if;
+if ( select count(*) from t_laboratori where codResponsabile !=
+new.codResponsabile and idlab=new.idLab) > 0
+THEN raise exception ’Responsabile Scientifico diverso da
+quello gi`a esistente per laboratorio’;
+end if;
+if ( new.codResponsabile = new.codImpiegato )
+THEN raise exception ’Responsabile Scientifico ed impiegato
+non possono essere uguali’;
+end if;
+return new;
+END $function$;
+CREATE TRIGGER insertLaboratorio BEFORE INSERT
+OR UPDATE ON t_laboratori
+FOR EACH ROW
+EXECUTE PROCEDURE checkLaboratorio();
+Documento
