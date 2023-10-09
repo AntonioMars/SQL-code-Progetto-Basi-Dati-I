@@ -1,0 +1,11 @@
+CREATE TABLE t_carriera (
+codImpiegato varchar NOT NULL,
+oldRuolo varchar NULL,
+newRuolo varchar NULL,
+dataScatto date NOT NULL,
+dirigente bool NULL DEFAULT false,
+CONSTRAINT t_carriera_pk PRIMARY KEY
+(codImpiegato, dataScatto),
+CONSTRAINT t_carriera_imp_fk FOREIGN KEY (codImpiegato)
+REFERENCES t_impiegati(codiceImpiegato)
+);
