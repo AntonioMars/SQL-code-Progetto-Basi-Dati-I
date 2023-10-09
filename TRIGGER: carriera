@@ -1,0 +1,69 @@
+CREATE OR REPLACE FUNCTION checkcareer()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $function$
+begin
+CREATE OR REPLACE FUNCTION public.checkcareer()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $function$
+begin
+if ( OLD."ruolo" is null and (NEW."dirigente" is null
+or NEW."dirigente" = false)) THEN
+INSERT INTO t_carriera (codImpiegato,oldRuolo, newRuolo,
+dirigente, dataScatto)
+VALUES(NEW.codiceImpiegato,
+OLD.ruolo,
+’JUNIOR’,
+false,
+(select dataAssunzione
+from t_impiegati where
+codiceImpiegato = NEW.codiceImpiegato));
+if(NEW.ruolo = ’MIDDLE’ or NEW.ruolo = ’SENIOR’) THEN
+INSERT INTO t_carriera (codImpiegato,oldRuolo,
+newRuolo, dirigente, dataScatto)
+VALUES(NEW.codiceImpiegato,
+’JUNIOR’,
+’MIDDLE’,
+false,
+(select dataAssunzione + interval ’3 year’
+from t_impiegati where
+codiceImpiegato = NEW.codiceImpiegato));
+end if;
+if(NEW.ruolo = ’SENIOR’) THEN
+INSERT INTO t_carriera (codImpiegato,oldRuolo,
+newRuolo, dirigente, dataScatto)
+VALUES(NEW.codiceImpiegato,
+’MIDDLE’,
+’SENIOR’,
+false,
+(select dataAssunzione + interval ’7 year’
+from t_impiegati where
+codiceImpiegato = NEW.codiceImpiegato));
+end if;
+elseif ( OLD."ruolo" != NEW."ruolo" and
+(NEW."dirigente" is null or NEW."dirigente" = false)) THEN
+INSERT INTO t_carriera (codImpiegato,oldRuolo, newRuolo,
+dirigente, dataScatto)
+VALUES(NEW.codice_impiegato,
+OLD.ruolo,
+NEW.ruolo,
+false,
+CURRENT_DATE);
+elseif (NEW."dirigente" is not null and
+NEW."dirigente" = true ) then
+INSERT INTO t_carriera (codImpiegato,oldRuolo, newRuolo,
+dirigente, dataScatto)
+VALUES(NEW.codiceImpiegato,
+OLD.ruolo,
+NEW.ruolo,
+true,
+CURRENT_DATE);
+end if;
+RETURN new;
+END $function$
+;
+CREATE TRIGGER writeCareer
+AFTER insert or UPDATE ON t_impiegati
+FOR EACH ROW
+EXECUTE FUNCTION checkCareer();
