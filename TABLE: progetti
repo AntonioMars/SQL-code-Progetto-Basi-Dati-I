@@ -1,0 +1,15 @@
+CREATE TABLE t_progetti (
+CUP varchar NOT NULL,
+nome varchar NOT NULL,
+codReferente varchar NOT NULL,
+codDirigente varchar NOT NULL,
+idLab int4 NOT NULL,
+CONSTRAINT t_progetto_pk PRIMARY KEY (CUP, idLab),
+CONSTRAINT t_progetti_nome_unique UNIQUE (nome),
+CONSTRAINT t_progetto_ref_sc_fk FOREIGN KEY (codReferente)
+REFERENCES t_impiegati(codiceImpiegato),
+CONSTRAINT t_progetto_resp_fk FOREIGN KEY (codDirigente)
+REFERENCES t_impiegati(codiceImpiegato),
+CONSTRAINT t_progetto_id_lab_fk FOREIGN KEY (idLab)
+REFERENCES t_laboratori(idLab)
+);
