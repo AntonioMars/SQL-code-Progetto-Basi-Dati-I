@@ -1,0 +1,23 @@
+CREATE OR REPLACE FUNCTION checkRole() RETURNS TRIGGER AS $$
+begin
+if(NEW."dirigente" is not null and
+NEW."dirigente" = false) then
+if ( (select DATE_PART(’year’,
+AGE(current_date, new."dataassunzione"))
+AS year) <3) THEN
+NEW."ruolo" := ’JUNIOR’;
+elseif ( (select DATE_PART(’year’,
+AGE(current_date, new."dataassunzione"))
+AS year) > 7) THEN
+NEW."ruolo" := ’SENIOR’;
+else
+NEW."ruolo" :=’MIDDLE’;
+end if;
+else
+NEW."ruolo" := null;
+end if;
+RETURN new;
+END $$ LANGUAGE plpgsql;
+CREATE TRIGGER writeRole BEFORE INSERT OR UPDATE ON t_impiegati
+FOR EACH ROW
+EXECUTE PROCEDURE checkRole();
