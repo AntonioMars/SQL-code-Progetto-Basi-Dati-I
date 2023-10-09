@@ -1,0 +1,25 @@
+CREATE OR REPLACE FUNCTION checkProgetto()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $function$
+begin
+if (TG_OP = ’INSERT’) then
+if ( select distinct count(idLab) from t_progetti p where
+p.CUP = new.CUP) = 3
+THEN raise exception ’Too Many Lab’;
+end if;
+end if;
+if ( select ruolo from t_impiegati where codiceImpiegato =
+new.codReferente) != ’SENIOR’
+THEN raise exception ’Referente Scientifico non `e SENIOR’;
+end if;
+if ( select dirigente from t_impiegati where codiceImpiegato =
+new.codDirigente) != true
+THEN raise exception ’Responsabile dirigente non `e DIRIGENTE’;
+end if;
+return new;
+END $function$;
+CREATE TRIGGER insertProgetto BEFORE INSERT
+OR UPDATE ON t_progetti
+FOR EACH ROW
+EXECUTE PROCEDURE checkProgetto();
