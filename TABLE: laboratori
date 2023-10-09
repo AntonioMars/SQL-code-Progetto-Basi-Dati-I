@@ -1,0 +1,11 @@
+CREATE TABLE t_laboratori (
+idLab int4 NOT NULL,
+topic varchar NOT NULL,
+codResponsabile varchar NOT NULL,
+codImpiegato varchar NOT NULL,
+CONSTRAINT t_laboratori_pk PRIMARY KEY (idLab,codImpiegato),
+CONSTRAINT t_laboratori_unique UNIQUE (codImpiegato),
+CONSTRAINT t_laboratori_imp_fk FOREIGN KEY (codImpiegato)
+REFERENCES t_impiegati(codiceImpiegato),
+CONSTRAINT t_laboratori_resp_fk FOREIGN KEY (codResponsabile)
+REFERENCES t_impiegati(codiceImpiegato));
