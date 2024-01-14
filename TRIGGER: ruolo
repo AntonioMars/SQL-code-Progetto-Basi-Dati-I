@@ -1,23 +1,41 @@
-CREATE OR REPLACE FUNCTION checkRole() RETURNS TRIGGER AS $$
+create trigger writerole before
+insert
+or
+update
+on
+public.t_impiegati for each row execute function checkrole();
+CREATE OR REPLACE FUNCTION public.checkrole()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $function$
 begin
-if(NEW."dirigente" is not null and
-NEW."dirigente" = false) then
-if ( (select DATE_PART(’year’,
-AGE(current_date, new."dataassunzione"))
-AS year) <3) THEN
-NEW."ruolo" := ’JUNIOR’;
+if(NEW."ruolo" is null or NEW."ruolo" != ’DIRIGENTE’) then
+if ( (select DATE_PART(’year’, AGE(current_date, NEW."dataassunzione"))
+AS year) <3) THEN NEW."ruolo" := ’JUNIOR’;
 elseif ( (select DATE_PART(’year’,
 AGE(current_date, new."dataassunzione"))
-AS year) > 7) THEN
-NEW."ruolo" := ’SENIOR’;
-else
-NEW."ruolo" :=’MIDDLE’;
+AS year) > 7) THEN NEW."ruolo" := ’SENIOR’;
+else NEW."ruolo" :=’MIDDLE’;
 end if;
-else
-NEW."ruolo" := null;
+end if;
+if(OLD."ruolo" = ’SENIOR’ and
+(NEW."ruolo" is null or NEW."ruolo" != ’SENIOR’)) then
+if ( select distinct count(idlab) from t_laboratori p where
+p.respScientifico = new.codiceimpiegato) > 0
+THEN raise exception ’Responsabile scientifico in un laboratorio’;
+end if;
+if ( select distinct count(cup) from t_progetti p where
+p.refScientifico = new.codiceimpiegato) > 0
+THEN raise exception ’Referente scientifico in un progetto’;
+end if;
+end if;
+if(OLD."ruolo" = ’DIRIGENTE’ and
+(NEW."ruolo" is null or NEW."ruolo" != ’DIRIGENTE’)) then
+if ( select distinct count(cup) from t_progetti p where
+p.responsabile = new.codiceimpiegato) > 0
+THEN raise exception ’Responsabile in un progetto’;
+end if;
 end if;
 RETURN new;
-END $$ LANGUAGE plpgsql;
-CREATE TRIGGER writeRole BEFORE INSERT OR UPDATE ON t_impiegati
-FOR EACH ROW
-EXECUTE PROCEDURE checkRole();
+END $function$
+;
