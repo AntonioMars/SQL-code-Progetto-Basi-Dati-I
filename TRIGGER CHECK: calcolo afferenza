@@ -1,0 +1,33 @@
+create trigger checklabafferenti before
+insert
+or
+update
+on
+public.t_impiegati for each row execute function calcolalabafferenti();
+CREATE OR REPLACE FUNCTION public.calcolalabafferenti()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $function$
+begin
+if (TG_OP = ’INSERT’) then
+update t_laboratori set afferenti=1 +
+(select afferenti from t_laboratori where
+idlab = new.idlab) where idlab = new.idlab;
+end if;
+if (TG_OP = ’UPDATE’ and
+(new.idlab != old.idlab or old.idlab is null
+or new.idlab is null)) then
+if (new.idlab is not null) then
+update t_laboratori set afferenti=1 +
+(select afferenti from t_laboratori where
+idlab = new.idlab) where idlab = new.idlab;
+end if;
+if (old.idlab is not null) then
+update t_laboratori set afferenti=
+(select afferenti from t_laboratori where
+idlab = old.idlab) -1 where idlab = old.idlab;
+end if;
+end if;
+return new;
+END;$function$
+;
