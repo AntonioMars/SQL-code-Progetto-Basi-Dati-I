@@ -1,69 +1,65 @@
-CREATE OR REPLACE FUNCTION checkcareer()
-RETURNS trigger
-LANGUAGE plpgsql
-AS $function$
-begin
+create trigger writecareer after
+insert
+or
+update
+on
+public.t_impiegati for each row execute function checkcareer();
 CREATE OR REPLACE FUNCTION public.checkcareer()
 RETURNS trigger
 LANGUAGE plpgsql
 AS $function$
+declare maxIdCarriera integer;
 begin
-if ( OLD."ruolo" is null and (NEW."dirigente" is null
-or NEW."dirigente" = false)) THEN
-INSERT INTO t_carriera (codImpiegato,oldRuolo, newRuolo,
-dirigente, dataScatto)
-VALUES(NEW.codiceImpiegato,
+select coalesce(MAX(idcarriera),0) into maxIdCarriera from t_carriera;
+if ( OLD."ruolo" is null and NEW."ruolo" != ’DIRIGENTE’) THEN
+INSERT INTO t_carriera
+(idcarriera, codImpiegato,oldRuolo, newRuolo, dataScatto)
+VALUES(maxIdCarriera+1,
+NEW.codiceimpiegato,
 OLD.ruolo,
 ’JUNIOR’,
-false,
 (select dataAssunzione
 from t_impiegati where
-codiceImpiegato = NEW.codiceImpiegato));
+codiceimpiegato = NEW.codiceimpiegato));
 if(NEW.ruolo = ’MIDDLE’ or NEW.ruolo = ’SENIOR’) THEN
-INSERT INTO t_carriera (codImpiegato,oldRuolo,
-newRuolo, dirigente, dataScatto)
-VALUES(NEW.codiceImpiegato,
+INSERT INTO t_carriera
+(idcarriera,codImpiegato,oldRuolo, newRuolo, dataScatto)
+VALUES(maxIdCarriera+2,
+NEW.codiceimpiegato,
 ’JUNIOR’,
 ’MIDDLE’,
-false,
 (select dataAssunzione + interval ’3 year’
 from t_impiegati where
 codiceImpiegato = NEW.codiceImpiegato));
 end if;
 if(NEW.ruolo = ’SENIOR’) THEN
-INSERT INTO t_carriera (codImpiegato,oldRuolo,
-newRuolo, dirigente, dataScatto)
-VALUES(NEW.codiceImpiegato,
+INSERT INTO t_carriera
+(idcarriera,codImpiegato,oldRuolo, newRuolo, dataScatto)
+VALUES(maxIdCarriera+3,
+NEW.codiceimpiegato,
 ’MIDDLE’,
 ’SENIOR’,
-false,
 (select dataAssunzione + interval ’7 year’
 from t_impiegati where
-codiceImpiegato = NEW.codiceImpiegato));
+codiceimpiegato = NEW.codiceimpiegato));
 end if;
-elseif ( OLD."ruolo" != NEW."ruolo" and
-(NEW."dirigente" is null or NEW."dirigente" = false)) THEN
-INSERT INTO t_carriera (codImpiegato,oldRuolo, newRuolo,
-dirigente, dataScatto)
-VALUES(NEW.codice_impiegato,
+elseif ( OLD.ruolo != NEW.ruolo) THEN
+INSERT INTO t_carriera
+(idcarriera,codImpiegato,oldRuolo, newRuolo, dataScatto)
+VALUES(maxIdCarriera+1,
+NEW.codiceimpiegato,
 OLD.ruolo,
 NEW.ruolo,
-false,
 CURRENT_DATE);
-elseif (NEW."dirigente" is not null and
-NEW."dirigente" = true ) then
-INSERT INTO t_carriera (codImpiegato,oldRuolo, newRuolo,
-dirigente, dataScatto)
-VALUES(NEW.codiceImpiegato,
+elseif ( NEW."ruolo" = ’DIRIGENTE’) THEN
+INSERT INTO t_carriera
+(idcarriera,codImpiegato,oldRuolo, newRuolo, dataScatto)
+VALUES(maxIdCarriera+1,
+NEW.codiceimpiegato,
 OLD.ruolo,
-NEW.ruolo,
-true,
+’DIRIGENTE’,
 CURRENT_DATE);
 end if;
 RETURN new;
 END $function$
 ;
-CREATE TRIGGER writeCareer
-AFTER insert or UPDATE ON t_impiegati
-FOR EACH ROW
-EXECUTE FUNCTION checkCareer();
