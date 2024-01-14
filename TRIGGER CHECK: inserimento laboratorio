@@ -1,25 +1,24 @@
-CREATE OR REPLACE FUNCTION checkLaboratorio()
+create trigger insertlaboratorio before
+insert
+or
+update
+on
+public.t_laboratori for each row execute function checklaboratorio()
+CREATE OR REPLACE FUNCTION public.checklaboratorio()
 RETURNS trigger
 LANGUAGE plpgsql
 AS $function$
 begin
-if ( select ruolo from t_impiegati where codiceImpiegato =
-new.codResponsabile) != ’SENIOR’
+if (TG_OP = ’INSERT’ or new.cup != old.cup) then
+if ( select distinct count(idLab) from t_laboratori p where
+p.cup = new.cup) = 3
+THEN raise exception ’Too Many Lab’;
+end if;
+end if;
+if ( select ruolo from t_impiegati where codiceimpiegato =
+new.respscientifico) != ’SENIOR’
 THEN raise exception ’Responsabile Scientifico non `e SENIOR’;
 end if;
-if ( select count(*) from t_laboratori where codResponsabile !=
-new.codResponsabile and idlab=new.idLab) > 0
-THEN raise exception ’Responsabile Scientifico diverso da
-quello gi`a esistente per laboratorio’;
-end if;
-if ( new.codResponsabile = new.codImpiegato )
-THEN raise exception ’Responsabile Scientifico ed impiegato
-non possono essere uguali’;
-end if;
 return new;
-END $function$;
-CREATE TRIGGER insertLaboratorio BEFORE INSERT
-OR UPDATE ON t_laboratori
-FOR EACH ROW
-EXECUTE PROCEDURE checkLaboratorio();
-Documento
+END;$function$
+;
