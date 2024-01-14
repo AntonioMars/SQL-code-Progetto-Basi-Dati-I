@@ -1,16 +1,25 @@
-CREATE TABLE t_impiegati (
-codiceImpiegato varchar NOT NULL,
-dataNascita date NOT NULL check
-(DATE_PART(’year’, AGE(current_date, dataNascita)) < 65),
+CREATE TABLE public.t_impiegati (
+codiceimpiegato varchar NOT NULL,
+datanascita date NOT NULL,
 nome varchar NOT NULL,
 cognome varchar NOT NULL,
-codiceFiscale varchar NOT null check
-(char_length(codiceFiscale) = 16),
-dataAssunzione date NOT NULL check
-(DATE_PART(’year’, AGE(dataAssunzione,
-dataNascita)) > 17) ,
-dirigente bool NOT NULL DEFAULT false,
+codicefiscale varchar NOT NULL,
+dataassunzione date NOT NULL,
 ruolo varchar NULL,
-CONSTRAINT t_impiegati_cf_unique UNIQUE (codiceFiscale),
-CONSTRAINT t_impiegato_pk PRIMARY KEY (codiceImpiegato)
+idlab int8 NULL,
+email varchar NULL,
+CONSTRAINT t_impiegati_cf_unique UNIQUE (codicefiscale),
+CONSTRAINT t_impiegati_check CHECK
+((date_part(’year’::text,
+age((dataassunzione)::timestamp with time zone,
+(datanascita)::timestamp with time zone)) > (17)::double precision)),
+CONSTRAINT t_impiegati_codicefiscale_check CHECK
+((char_length((codicefiscale)::text) = 16)),
+CONSTRAINT t_impiegati_datanascita_check CHECK
+((date_part(’year’::text,
+age((CURRENT_DATE)::timestamp with time zone,
+(datanascita)::timestamp with time zone)) < (65)::double precision)),
+CONSTRAINT t_impiegati_pk PRIMARY KEY (codiceimpiegato),
+CONSTRAINT t_impiegati_lab_fk FOREIGN KEY
+(idlab) REFERENCES public.t_laboratori(idlab)
 );
