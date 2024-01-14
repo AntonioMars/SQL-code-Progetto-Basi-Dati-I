@@ -1,11 +1,10 @@
-CREATE TABLE t_carriera (
-codImpiegato varchar NOT NULL,
-oldRuolo varchar NULL,
-newRuolo varchar NULL,
-dataScatto date NOT NULL,
-dirigente bool NULL DEFAULT false,
-CONSTRAINT t_carriera_pk PRIMARY KEY
-(codImpiegato, dataScatto),
-CONSTRAINT t_carriera_imp_fk FOREIGN KEY (codImpiegato)
-REFERENCES t_impiegati(codiceImpiegato)
+CREATE TABLE public.t_carriera (
+codimpiegato varchar NOT NULL,
+oldruolo varchar NULL,
+newruolo varchar NULL,
+datascatto date NOT NULL,
+idcarriera int8 NOT NULL,
+CONSTRAINT t_carriera_pk PRIMARY KEY (idcarriera),
+CONSTRAINT t_carriera_imp_fk FOREIGN KEY (codimpiegato)
+REFERENCES public.t_impiegati(codiceimpiegato)
 );
